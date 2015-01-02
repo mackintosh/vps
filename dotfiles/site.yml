@@ -1,0 +1,38 @@
+---
+- hosts: all
+  tasks:
+    - name: ensure ruby is installed
+      apt: name=ruby state=installed
+
+    - name: ensure rake is insatlled
+      shell: gem install rake
+
+    - name: ensure zsh is installed
+      apt: name=zsh state=installed
+
+    - name: ensure git is installed
+      apt: name=git state=installed
+    
+    - name: create my account
+      user: name=mackintosh shell=/usr/bin/zsh
+
+    - name: add my public key to the server
+      authorized_key: user=mackintosh
+                      key="{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+
+    - name: install oh-my-zsh
+      git: repo=https://github.com/robbyrussell/oh-my-zsh.git
+           dest=~/.oh-my-zsh
+      remote_user: mackintosh
+      sudo: false
+
+    - name: clone dotfiles
+      git: repo=https://github.com/rramsden/.dotfiles.git
+           dest=~/dotfiles
+      remote_user: mackintosh
+      sudo: false
+
+    - name: symlink dotfiles
+      command: rake link_conf_files chdir=~/dotfiles
+      remote_user: mackintosh
+      sudo: false
