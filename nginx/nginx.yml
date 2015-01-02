@@ -1,0 +1,27 @@
+---
+- hosts: all
+  tasks:
+    - name: create www-data group
+      group: name=www-data state=present
+
+    - name: create a user for website
+      user: name=web group=www-data state=present
+
+    - name: add my public key to the server
+      authorized_key: user=web
+                      key="{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+
+    - name: ensure nginx webserver is installed
+      apt: pkg=nginx state=installed update_cache=true
+
+    - name: ensure www directory exists
+      file: path=/var/www/gamenao.com state=directory
+
+    - name: copy blog configuration
+      copy: src=files/gamenao.com.conf dest=/etc/nginx/sites-enabled/gamenao.com
+      notify:
+        - start nginx
+
+  handlers:
+    - name: start nginx
+      service: name=nginx state=started
